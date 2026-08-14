@@ -1,11 +1,12 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, web};
+use actix_web::{App, HttpResponse, HttpServer, Responder, web, dev::Server};
 
-pub async fn run() -> Result<(), std::io::Error> {
-    HttpServer::new(|| {
+pub fn run() -> Result<Server, std::io::Error> {
+    let server = HttpServer::new(|| {
         App::new()
         .route("/health_check", web::get().to(health_check))
-    }).bind("127.0.0.1:8000")?
-    .run().await
+        }).bind("127.0.0.1:8000")?
+        .run(); 
+    Ok(server)
 }
 
     
