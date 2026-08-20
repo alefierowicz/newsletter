@@ -27,3 +27,49 @@ fn spawn_app() -> String {
     let _ = tokio::spawn(server);
     format!("127.0.0.1:{}", port)
 }
+
+// #[tokio::test]
+// async fn subscribe_returns_200_for_valid_data() {
+//     let address: String = format!("http://{}/subscriptions", spawn_app());
+//     let client = reqwest::Client::new();
+
+//     let body = "name=big%20slime&email=big_slime%40gmail.com";
+//     let response = client
+//         .post(&address)
+//         .header("Content-Type", "application/x-www-form-unencoded")
+//         .body(body)
+//         .send()
+//         .await
+//         .expect("failed to execute request");
+
+//     assert_eq!(200, response.status().as_u16());
+// }
+
+// #[tokio::test]
+// async fn subscribe_returns_400_for_bad_data() {
+//     let address: String = format!("http://{}/subscriptions", spawn_app());
+//     let client = reqwest::Client::new();
+
+//     let test_cases: Vec<(&str, &str)> = vec![
+//         ("missing email", "name=big%20slime"),
+//         ("missing name", "email=big_slime%40gmail.com&ping=pong"),
+//         ("missing both", ""),
+//     ];
+
+//     for (error_message, invalid_body) in test_cases {
+//         let response = client
+//             .post(&address)
+//             .header("Content-Type", "application/x-www-form-unencoded")
+//             .body(invalid_body)
+//             .send()
+//             .await
+//             .expect("failed to execute request");
+
+//         assert_eq!(
+//             400,
+//             response.status().as_u16(),
+//             "The API didn't respond appropriately when the payload was {}",
+//             error_message
+//         );
+//     }
+// }
