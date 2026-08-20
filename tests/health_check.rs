@@ -2,11 +2,11 @@ use std::net::TcpListener;
 
 #[tokio::test]
 async fn health_check_works(){
-    spawn_app();
+    let address = format!("http://{}/health_check", spawn_app());
 
     let client = reqwest::Client::new();
 
-    let res = client.get("http://127.0.0.1:8000/health_check")
+    let res = client.get(address)
         .send()
         .await
         .expect("failed to execute request");
