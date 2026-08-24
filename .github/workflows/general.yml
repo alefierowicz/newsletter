@@ -33,7 +33,7 @@ jobs:
             - name: create the user in postgres
               run: |
                 sudo apt install postgresql-client
-                CREATE_QUERY="CREATE USER '${APP_USER}' WITH PASSWORD '${APP_USER_PWD}';"
+                CREATE_QUERY="CREATE USER ${APP_USER} WITH PASSWORD '${APP_USER_PWD}';"
                 PGPASSWORD="password" psql -U "postgres" -h "localhost" -c "${CREATE_QUERY}"
             
             - name: grant privileges
