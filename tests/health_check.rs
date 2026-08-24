@@ -23,7 +23,7 @@ fn spawn_app() -> String {
         .expect("failed to receive local address")
         .port();
 
-    let server = newsletter::run(listener).expect("failed to bind address");
+    let server = newsletter::startup::run(listener).expect("failed to bind address");
     let _ = tokio::spawn(server);
     format!("127.0.0.1:{}", port)
 }
