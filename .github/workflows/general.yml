@@ -27,7 +27,15 @@ jobs:
             - uses: dtolnay/rust-toolchain@stable
             - uses: Swatinem/rust-cache@v2
             
+            - name: cache sqlx-cli binary
+              id: cache-sqlx
+              uses: actions/cache@v4
+              with:
+                path: ~/.cargo/bin/sqlx
+                key: ${{ runner.os }}-sqlx-cli-${{ env.SQLX_VERSION }}
+
             - name: install sqlx
+              if: steps.cache-sqlx.outputs.cache-hit != 'true'
               run: cargo install sqlx-cli --version=${{env.SQLX_VERSION}} --features ${{env.SQLX_FEATURES}} --no-default-features --locked
             
             - name: create the user in postgres
