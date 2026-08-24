@@ -1,8 +1,10 @@
+use newsletter::configuration::get_configuration;
+use sqlx::{Connection, PgConnection};
 use std::net::TcpListener;
 
 #[tokio::test]
 async fn health_check_works() {
-    let address = format!("http://{}/health_check", spawn_app());
+    let address = format!("{}/health_check", spawn_app());
 
     let client = reqwest::Client::new();
 
@@ -25,29 +27,44 @@ fn spawn_app() -> String {
 
     let server = newsletter::startup::run(listener).expect("failed to bind address");
     let _ = tokio::spawn(server);
-    format!("127.0.0.1:{}", port)
+    format!("http://127.0.0.1:{}", port)
 }
 
 #[tokio::test]
 async fn subscribe_returns_200_for_valid_data() {
-    let address: String = format!("http://{}/subscriptions", spawn_app());
+    let app_address = spawn_app();
+
+    let config = get_configuration().expect("failed to load config from file");
+    let connection_string = config.db.connection_string();
+
+    let mut connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("failed to connect to database");
     let client = reqwest::Client::new();
 
     let body = "name=big%20slime&email=big_slime%40gmail.com";
     let response = client
-        .post(&address)
-        .header("Content-Type", "application/x-www-form-unencoded")
+        .post(&app_address)
+        .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
         .await
         .expect("failed to execute request");
 
     assert_eq!(200, response.status().as_u16());
+
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+        .fetch_one(&mut connection)
+        .await
+        .expect("failed to fetch saved sub");
+
+    assert_eq!(saved.email, "big_slime@gmail.com");
+    assert_eq!(saved.name, "big slime");
 }
 
 #[tokio::test]
 async fn subscribe_returns_400_for_bad_data() {
-    let address: String = format!("http://{}/subscriptions", spawn_app());
+    let address: String = format!("{}/subscriptions", spawn_app());
     let client = reqwest::Client::new();
 
     let test_cases: Vec<(&str, &str)> = vec![
@@ -59,7 +76,7 @@ async fn subscribe_returns_400_for_bad_data() {
     for (error_message, invalid_body) in test_cases {
         let response = client
             .post(&address)
-            .header("Content-Type", "application/x-www-form-unencoded")
+            .header("Content-Type", "application/x-www-form-urlencoded")
             .body(invalid_body)
             .send()
             .await
