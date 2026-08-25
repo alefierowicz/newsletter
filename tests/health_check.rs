@@ -38,7 +38,7 @@ pub async fn configure_db(config: &DatabaseSettings) -> PgPool {
         .await
         .expect("failed to create database");
 
-    let connection_pool = PgPool::connect(&config.connection_string_without_db())
+    let connection_pool = PgPool::connect(&config.connection_string())
         .await
         .expect("failed to connect to Postgres (using PgPool)");
 
