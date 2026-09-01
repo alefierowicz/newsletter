@@ -1,5 +1,6 @@
 use newsletter::configuration::{DatabaseSettings, get_configuration};
 use newsletter::startup::run;
+use newsletter::telemetry::{get_subscriber, init_subscriber};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -10,6 +11,9 @@ pub struct TestApp {
 }
 
 async fn spawn_app() -> TestApp {
+    let subscriber = get_subscriber("test".into(), "info".into());
+    init_subscriber(subscriber);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind to random port.");
     let port = listener.local_addr().expect("failed to fetch port").port();
 

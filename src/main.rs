@@ -1,13 +1,16 @@
 use std::net::TcpListener;
 
-use env_logger::Env;
+use newsletter::telemetry::{get_subscriber, init_subscriber};
 use newsletter::{configuration::get_configuration, startup::run};
 use sqlx::PgPool;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    // tracing config
+    let subscriber = get_subscriber("newsletter".into(), "info".into());
+    init_subscriber(subscriber);
 
+    // app config
     let configuration = get_configuration().expect("failed to load config from file");
     let connection_pool = PgPool::connect(&configuration.db.connection_string())
         .await
