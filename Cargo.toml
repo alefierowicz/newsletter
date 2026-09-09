@@ -22,6 +22,7 @@ tracing = { version = "*", features = ["log"] }
 tracing-subscriber = { version = "*", features = ["registry", "env-filter"] }
 tracing-bunyan-formatter = "*"
 tracing-log = "*"
+once_cell = "1.21.4"
 
 [dependencies.sqlx]
 version = "0.8.0"

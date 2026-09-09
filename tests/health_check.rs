@@ -4,15 +4,29 @@ use newsletter::telemetry::{get_subscriber, init_subscriber};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
-
+use once_cell::sync::Lazy;
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
 
+static TRACING: Lazy<()> = Lazy::new( || {
+    let default_filter_level = "info".to_string();
+    let subscriber_name = "test".to_string();
+
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::stdout);
+        init_subscriber(subscriber);
+    }
+    else {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::sink);
+        init_subscriber(subscriber);
+    }
+    
+});
+
 async fn spawn_app() -> TestApp {
-    let subscriber = get_subscriber("test".into(), "info".into());
-    init_subscriber(subscriber);
+    Lazy::force(&TRACING);
 
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind to random port.");
     let port = listener.local_addr().expect("failed to fetch port").port();
