@@ -1,7 +1,6 @@
 use actix_web::{HttpResponse, Responder, web};
 use chrono::Utc;
 use sqlx::PgPool;
-use tracing::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -10,20 +9,32 @@ pub struct FormData {
     email: String,
 }
 
-pub async fn subscribe(form: web::Form<FormData>, db_pool: web::Data<PgPool>) -> impl Responder {
-    let rid = Uuid::new_v4();
-
-    let span = tracing::info_span!(
-        "adding a new subscriber",
-        %rid,
-        subscriber_email = %form.email,
+#[tracing::instrument(
+    name = "adding a new subscriber",
+    skip(form, db_pool),
+    fields(
+        subscriber_email=%form.email,
         subscriber_name = %form.name
-    );
+    )
+)]
+pub async fn subscribe(form: web::Form<FormData>, db_pool: web::Data<PgPool>) -> impl Responder {
+    match insert_subscriber(&form,&db_pool)
+    .await
+    {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => {
+            tracing::error!("failed to execute query: {:?}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
 
-    let _req_span_guard = span.enter();
-    let q_span = tracing::info_span!("saving new subscriber to the db...");
-
-    match sqlx::query!(
+#[tracing::instrument(
+    name="saving new subscriber to the database",
+    skip(form, db_pool)
+)]
+pub async fn insert_subscriber(form: &FormData, db_pool: &PgPool,) -> Result<(), sqlx::Error> {
+    sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
         VALUES ($1, $2, $3, $4)
@@ -32,15 +43,11 @@ pub async fn subscribe(form: web::Form<FormData>, db_pool: web::Data<PgPool>) ->
         form.email,
         form.name,
         Utc::now()
-    )
-    .execute(db_pool.get_ref())
-    .instrument(q_span)
-    .await
-    {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(e) => {
-            tracing::error!("[{rid}] failed to execute query: {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    ).execute(db_pool).await
+    .map_err(|e| {
+        tracing::error!("failed to execute query: {:?}", e);
+        e
+    })?;
+
+    Ok(())
 }

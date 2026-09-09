@@ -2,6 +2,7 @@ use newsletter::configuration::{DatabaseSettings, get_configuration};
 use newsletter::startup::run;
 use newsletter::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -45,7 +46,7 @@ async fn spawn_app() -> TestApp {
 }
 
 pub async fn configure_db(config: &DatabaseSettings) -> PgPool {
-    let mut connection = PgConnection::connect(&config.connection_string_without_db())
+    let mut connection = PgConnection::connect(&config.connection_string_without_db().expose_secret())
         .await
         .expect("failed to connect to postgres");
 
@@ -54,7 +55,7 @@ pub async fn configure_db(config: &DatabaseSettings) -> PgPool {
         .await
         .expect("failed to create database");
 
-    let connection_pool = PgPool::connect(&config.connection_string())
+    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
         .await
         .expect("failed to connect to Postgres (using PgPool)");
 
