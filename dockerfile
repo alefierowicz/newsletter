@@ -1,4 +1,4 @@
-FROM rust:1.98.0 as builder
+FROM rust:1.98.0-bookworm AS builder
 
 WORKDIR /app
 RUN apt update && apt install lld clang -y
@@ -22,4 +22,4 @@ COPY --from=builder /app/target/release/newsletter newsletter
 COPY configuration configuration
 
 ENV APP_ENVIRONMENT=production
-ENTRYPOINT ["./target/release/newsletter"]
+ENTRYPOINT ["./newsletter"]
